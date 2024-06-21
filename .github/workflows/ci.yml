@@ -1,0 +1,63 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: yarn install
+      - run: yarn prisma:generate
+      - run: yarn lint
+      - run: yarn test
+      - run: yarn test:e2e
+      - run: yarn prebuild
+      - run: yarn build
+
+  # prisma-migrate:
+  #   name: Prisma Migrate
+  #   needs:
+  #     - ci
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '18'
+  #     - uses: "aws-actions/configure-aws-credentials@v1"
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: "us-east-1"
+  #     - uses: "marvinpinto/action-inject-ssm-secrets@v1.2.1"
+  #       with:
+  #         ssm_parameter: "/dev/database/url"
+  #         env_variable_name: "DATABASE_URL"
+  #     - run: yarn install
+  #     - run: npx prisma migrate deploy
+  
+  # deploy:
+  #   name: Deploy
+  #   needs:
+  #     - prisma-migrate
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '18'
+  #     - run: yarn install
+  #     - run: yarn build # bundle with webpack
+  #     - run: npx serverless deploy
+  #       env:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
